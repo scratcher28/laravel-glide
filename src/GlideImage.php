@@ -53,7 +53,15 @@ class GlideImage
             'cache' => $cacheDir,
             'driver' => config('laravel-glide.driver'),
         ];
-
+        
+        if (isset($this->modificationParameters['source'])) {
+            $glideServerParameters['source'] = $this->modificationParameters['source'];
+        }
+        
+        if (isset($this->modificationParameters['cache'])) {
+            $glideServerParameters['cache'] = $this->modificationParameters['cache'];
+        }        
+        
         if (isset($this->modificationParameters['mark'])) {
             $watermarkPathInfo = pathinfo($this->modificationParameters['mark']);
             $glideServerParameters['watermarks'] = $watermarkPathInfo['dirname'];
@@ -61,11 +69,13 @@ class GlideImage
         }
 
         $glideServer = ServerFactory::create($glideServerParameters);
+        
+		$glideServer->setGroupCacheInFolders(false);
+		$glideServer->setCachePathPrefix(dirname($outputFile));
+		$glideServer->setCustomFilenameHash(basename($outputFile));        
 
-        $conversionResult = $cacheDir.'/'.$glideServer->makeImage($sourceFileName, $modificationParameters ?? $this->modificationParameters);
+        $conversionResult = $glideServer->makeImage($outputFile, $modificationParameters ?? $this->modificationParameters);
 
-        rename($conversionResult, $outputFile);
-
-        return $outputFile;
+        return $conversionResult;
     }
 }
